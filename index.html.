@@ -1,1 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>OnlyFans Mini</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    background: linear-gradient(135deg, #0a0a0a 0%, #0f0f0f 100%);
+    color: #fff;
+    padding: 20px;
+    min-height: 100vh;
+}
+.container { max-width: 500px; margin: 0 auto; }
+h1 {
+    color: #ff00aa;
+    font-size: 28px;
+    text-align: center;
+    margin-bottom: 8px;
+}
+.subtitle {
+    color: #888;
+    font-size: 14px;
+    text-align: center;
+    margin-bottom: 30px;
+}
+.calc {
+    background: rgba(26, 26, 26, 0.9);
+    padding: 24px;
+    border-radius: 20px;
+    margin-bottom: 20px;
+    border: 1px solid rgba(255, 0, 170, 0.2);
+}
+.benefits li {
+    margin-bottom: 12px;
+    padding-left: 28px;
+    position: relative;
+}
+.benefits li:before {
+    content: "🔥";
+    position: absolute;
+    left: 0;
+}
+button {
+    padding: 14px 30px;
+    font-size: 16px;
+    font-weight: bold;
+    border: none;
+    border-radius: 12px;
+    cursor: pointer;
+    width: 100%;
+    margin: 10px 0;
+}
+.payment-btn {
+    background: linear-gradient(135deg, #ff8800 0%, #cc6600 100%);
+    color: #fff;
+}
+.payment-options {
+    display: none;
+    gap: 10px;
+    margin-top: 15px;
+}
+.status {
+    margin-top: 20px;
+    padding: 15px;
+    border-radius: 12px;
+    text-align: center;
+    font-size: 14px;
+}
+.status.success { background: rgba(0, 255, 136, 0.2); color: #00ff88; border: 1px solid #00ff88; }
+.status.error { background: rgba(255, 68, 68, 0.2); color: #ff4444; border: 1px solid #ff4444; }
+.status.info { background: rgba(255, 136, 0, 0.2); color: #ff8800; border: 1px solid #ff8800; }
+.progress-bar {
+    height: 6px;
+    background: #333;
+    border-radius: 3px;
+    margin: 15px auto;
+    overflow: hidden;
+}
+.progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #ff00aa, #cc0088);
+    width: 0%;
+    transition: width 0.3s;
+}
+</style>
+</head>
+<body>
+<div class="container">
+    <h1>🔥 OnlyFans Mini</h1>
+    <div class="subtitle">Exclusive content • Private chats • Live streams</div>
+    
+    <div class="calc">
+        <h2>🔥 What you get after payment</h2>
+        <ul class="benefits">
+            <li>Full access to 1000+ hot photos and videos</li>
+            <li>Private 1-on-1 chats with models</li>
+            <li>Live streams and custom content requests</li>
+            <li>Weekly fresh updates</li>
+            <li>Anonymous payment via TON</li>
+            <li>Instant access link in this chat</li>
+        </ul>
+    </div>
 
+    <button id="payBtn" class="payment-btn">💰 Pay 0.1 TON for FULL ACCESS</button>
+    
+    <div id="paymentOptions" class="payment-options">
+        <button onclick="openTelegramWallet()">💎 Telegram Wallet</button>
+        <button onclick="openExternalWallet()">🔗 TON Keeper / Tonhub</button>
+        <button onclick="installWallet()">📲 Install TON Wallet</button>
+    </div>
+    
+    <div id="status"></div>
+    <div id="progressBar" class="progress-bar" style="display: none;">
+        <div id="progressFill" class="progress-fill"></div>
+    </div>
+    
+    <button onclick="contactSupport()" style="background:transparent; border:1px solid #ff00aa; color:#ff00aa; margin-top:20px;">
+        💬 Support
+    </button>
+</div>
+
+<script>
+const tg = window.Telegram?.WebApp;
+let userId = tg?.initDataUnsafe?.user?.id || 0;
+
+const BACKEND_URL = "https://tomkolins.pythonanywhere.com/check_payment";
+const address = "UQA4aInFqReAIe9UrFhqu-CRzhpLAGwAZJKAEYMO_KIjK0ni";
+const amountTON = 100000000;
+
+document.getElementById("payBtn").addEventListener("click", function() {
+    if (userId === 0) {
+        alert("Please open this from Telegram bot");
+        return;
+    }
+    document.getElementById("paymentOptions").style.display = "flex";
+});
+
+function showStatus(msg, type = "info") {
+    const el = document.getElementById("status");
+    el.className = `status ${type}`;
+    el.innerHTML = msg;
+    el.style.display = "block";
+}
+
+async function checkPayment(comment) {
+    let attempt = 1;
+    const max = 20;
+
+    while (attempt <= max) {
+        showStatus(`Checking payment... (${attempt}/${max})`, "info");
+        
+        try {
+            const res = await fetch(BACKEND_URL, {
+                method: "POST",
+                headers: {"Content-Type": "application/json"},
+                body: JSON.stringify({comment: comment})
+            });
+            const data = await res.json();
+
+            if (data.paid) {
+                showStatus("✅ Payment confirmed! Access link sent!", "success");
+                return;
+            }
+        } catch(e) {}
+
+        await new Promise(r => setTimeout(r, 5000));
+        attempt++;
+    }
+    showStatus("Payment not found. Please check comment.", "error");
+}
+
+// Платёжные функции (оставил упрощённые)
+function openTelegramWallet() {
+    const comment = `onlyfansaccess_${userId}`;
+    const text = `Address: ${address}\nComment: ${comment}\nAmount: 0.1 TON`;
+    navigator.clipboard.writeText(text);
+    window.open("https://t.me/wallet", "_blank");
+    setTimeout(() => checkPayment(comment), 3000);
+}
+
+function openExternalWallet() {
+    const comment = `onlyfansaccess_${userId}`;
+    const link = `ton://transfer/${address}?amount=${amountTON}&text=${encodeURIComponent(comment)}`;
+    window.open(link, "_blank");
+    setTimeout(() => checkPayment(comment), 3000);
+}
+
+function installWallet() {
+    window.open("https://ton.org/wallets", "_blank");
+}
+
+function contactSupport() {
+    window.open("https://t.me/AntonDrogovoz", "_blank");
+}
+</script>
+</body>
+</html>
