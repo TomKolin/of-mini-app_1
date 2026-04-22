@@ -5,8 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <title>OnlyFans Mini</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
+
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
+
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
             background: linear-gradient(135deg, #0a0a0a 0%, #1a1a1a 100%);
@@ -14,9 +16,23 @@
             padding: 20px;
             min-height: 100vh;
         }
+
         .container { max-width: 500px; margin: 0 auto; }
-        h1 { color: #ff00aa; font-size: 28px; text-align: center; margin-bottom: 8px; }
-        .subtitle { color: #888; font-size: 14px; text-align: center; margin-bottom: 25px; }
+
+        h1 {
+            color: #ff00aa;
+            font-size: 28px;
+            text-align: center;
+            margin-bottom: 8px;
+        }
+
+        .subtitle {
+            color: #888;
+            font-size: 14px;
+            text-align: center;
+            margin-bottom: 25px;
+        }
+
         .card {
             background: rgba(26, 26, 26, 0.95);
             padding: 24px;
@@ -24,6 +40,7 @@
             margin-bottom: 25px;
             border: 1px solid rgba(255, 0, 170, 0.3);
         }
+
         button {
             width: 100%;
             padding: 16px;
@@ -34,10 +51,12 @@
             cursor: pointer;
             margin: 12px 0;
         }
+
         .pay-btn {
             background: linear-gradient(135deg, #ff8800, #ff5500);
             color: white;
         }
+
         .status {
             margin-top: 15px;
             padding: 15px;
@@ -46,6 +65,7 @@
         }
     </style>
 </head>
+
 <body>
 <div class="container">
     <h1>🔥 OnlyFans Mini</h1>
@@ -53,17 +73,19 @@
 
     <div class="card">
         <h2 style="color:#ff00aa; margin-bottom:15px;">What you get after payment</h2>
-        <ul style="list-style:none; padding-left:0;">
-            <li>🔥 Full access to 1000+ hot photos and videos</li>
-            <li>🔥 Private 1-on-1 chats with models</li>
-            <li>🔥 Live streams and custom content</li>
-            <li>🔥 Weekly fresh updates</li>
-            <li>🔥 Anonymous TON payment</li>
-            <li>🔥 Instant access link</li>
+        <ul style="list-style:none;">
+            <li>🔥 Full access to 1000+ content</li>
+            <li>🔥 Private chats</li>
+            <li>🔥 Live streams</li>
+            <li>🔥 Weekly updates</li>
+            <li>🔥 TON payment</li>
+            <li>🔥 Instant access</li>
         </ul>
     </div>
 
-    <button id="payBtn" class="pay-btn">💰 Pay 0.1 TON for FULL ACCESS</button>
+    <button id="payBtn" class="pay-btn">
+        💰 Pay 0.1 TON for FULL ACCESS
+    </button>
 
     <div id="paymentOptions" style="display:none;">
         <button onclick="openTelegramWallet()">💎 Telegram Wallet</button>
@@ -74,61 +96,92 @@
 </div>
 
 <script>
-    const tg = window.Telegram?.WebApp;
-    let userId = tg?.initDataUnsafe?.user?.id || 0;
+const tg = window.Telegram?.WebApp;
+let userId = tg?.initDataUnsafe?.user?.id || 0;
 
-    const BACKEND_URL = "https://tomkolins.pythonanywhere.com/check_payment";
-    const address = "UQA4aInFqReAIe9UrFhqu-CRzhpLAGwAZJKAEYMO_KIjK0ni";
+// ❗ ВАЖНО — правильный URL
+const BACKEND_URL = "https://tomkolin.pythonanywhere.com/check_status";
 
-    document.getElementById("payBtn").addEventListener("click", () => {
-        if (userId === 0) {
-            alert("Open this from @onlyfansssssss_bot");
-            return;
+const address = "UQA4aInFqReAIe9UrFhqu-CRzhpLAGwAZJKAEYMO_KIjK0ni";
+
+document.getElementById("payBtn").addEventListener("click", () => {
+    if (userId === 0) {
+        alert("Open this page via bot");
+        return;
+    }
+
+    document.getElementById("paymentOptions").style.display = "block";
+});
+
+function showStatus(msg, type = "") {
+    const el = document.getElementById("status");
+
+    el.innerHTML = msg;
+
+    el.style.background = type === "success"
+        ? "rgba(0,255,100,0.2)"
+        : "rgba(255,200,0,0.2)";
+
+    el.style.color = type === "success"
+        ? "#00ff88"
+        : "#ffcc00";
+}
+
+// 🔥 Главный polling
+async function checkPayment(comment) {
+    showStatus("⏳ Waiting for payment...");
+
+    while (true) {
+        try {
+            const res = await fetch(BACKEND_URL, {
+                method: "POST",
+                headers: {"Content-Type": "application/json"},
+                body: JSON.stringify({comment})
+            });
+
+            const data = await res.json();
+
+            if (data.paid) {
+                showStatus("✅ Payment received! Check Telegram", "success");
+                return;
+            }
+
+        } catch (e) {
+            console.log("Error:", e);
         }
-        document.getElementById("paymentOptions").style.display = "block";
-    });
 
-    function showStatus(msg, type = "") {
-        const el = document.getElementById("status");
-        el.innerHTML = msg;
-        el.style.background = type === "success" ? "rgba(0,255,100,0.2)" : "rgba(255,200,0,0.2)";
-        el.style.color = type === "success" ? "#00ff88" : "#ffcc00";
+        await new Promise(r => setTimeout(r, 3000));
     }
+}
 
-    async function checkPayment(comment) {
-        showStatus("Checking payment...");
-        for (let i = 1; i <= 15; i++) {
-            try {
-                const res = await fetch(BACKEND_URL, {
-                    method: "POST",
-                    headers: {"Content-Type": "application/json"},
-                    body: JSON.stringify({comment})
-                });
-                const data = await res.json();
-                if (data.paid) {
-                    showStatus("✅ Payment successful! Link sent to chat", "success");
-                    return;
-                }
-            } catch(e) {}
-            await new Promise(r => setTimeout(r, 4000));
-        }
-        showStatus("Payment not found. Try again.");
-    }
+// 💎 Telegram Wallet
+function openTelegramWallet() {
+    const comment = `onlyfansaccess_${userId}`;
 
-    function openTelegramWallet() {
-        const comment = `onlyfansaccess_${userId}`;
-        const text = `Address: ${address}\nComment: ${comment}\nAmount: 0.1 TON`;
-        navigator.clipboard.writeText(text);
-        window.open("https://t.me/wallet", "_blank");
-        setTimeout(() => checkPayment(comment), 3000);
-    }
+    const text =
+        `Address: ${address}\n` +
+        `Comment: ${comment}\n` +
+        `Amount: 0.1 TON`;
 
-    function openExternalWallet() {
-        const comment = `onlyfansaccess_${userId}`;
-        const link = `ton://transfer/${address}?amount=100000000&text=${encodeURIComponent(comment)}`;
-        window.open(link, "_blank");
-        setTimeout(() => checkPayment(comment), 3000);
-    }
+    navigator.clipboard.writeText(text);
+
+    window.open("https://t.me/wallet", "_blank");
+
+    checkPayment(comment);
+}
+
+// 🔗 External Wallet
+function openExternalWallet() {
+    const comment = `onlyfansaccess_${userId}`;
+
+    const link =
+        `ton://transfer/${address}?amount=100000000&text=${encodeURIComponent(comment)}`;
+
+    window.open(link, "_blank");
+
+    checkPayment(comment);
+}
 </script>
+
 </body>
 </html>
