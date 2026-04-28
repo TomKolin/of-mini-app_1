@@ -1,97 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TON Pay</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+
+<style>
+body {
+    background: #0a0a0a;
+    color: white;
+    font-family: Arial;
+    text-align: center;
+    padding: 20px;
+}
+button {
+    width: 100%;
+    padding: 15px;
+    margin: 10px 0;
+    border-radius: 10px;
+    border: none;
+    font-size: 16px;
+}
+.pay { background: orange; }
+</style>
+</head>
+
+<body>
+
+<h2>💰 Pay for access</h2>
+
+<button id="payBtn" class="pay">Pay</button>
+
+<div id="paymentOptions"></div>
+<div id="status"></div>
+
 <script>
-const tg = window.Telegram?.WebApp;
-let userId = tg?.initDataUnsafe?.user?.id || 0;
+const tg = window.Telegram.WebApp;
+tg.expand();
 
-const BACKEND_URL = "https://tomkolin.pythonanywhere.com/check_payment";
-const address = "UQA4aInFqReAIe9UrFhqu-CRzhpLAGwAZJKAEYMO_KIjK0ni";
+let userId = tg.initDataUnsafe?.user?.id;
 
-function generateAmount(userId) {
-    const base = 0.1;
-    const extra = (userId % 1000) / 100000;
-    return (base + extra).toFixed(6);
+const BACKEND = "https://tomkolin.pythonanywhere.com/check_payment";
+const ADDRESS = "UQA4aInFqReAIe9UrFhqu-CRzhpLAGwAZJKAEYMO_KIjK0ni";
+
+// уникальная сумма
+function getAmount(id) {
+    return (0.1 + (id % 1000) / 100000).toFixed(6);
 }
 
-document.getElementById("payBtn").addEventListener("click", () => {
-    if (userId === 0) {
-        alert("Open from Telegram bot");
+document.getElementById("payBtn").onclick = () => {
+
+    if (!userId) {
+        alert("Open inside Telegram");
         return;
     }
 
-    const amount = generateAmount(userId);
+    const amount = getAmount(userId);
 
     document.getElementById("paymentOptions").innerHTML = `
-        <div style="margin-bottom:15px; font-size:14px; color:#aaa;">
-            Send exactly:<br>
-            <b style="color:#fff;">${amount} TON</b>
-        </div>
+        <p>Send exactly:</p>
+        <h3>${amount} TON</h3>
 
-        <button onclick="copyAmount('${amount}')">📋 Copy amount</button>
-        <button onclick="openTelegramWallet('${amount}')">💎 Telegram Wallet</button>
-        <button onclick="openExternalWallet('${amount}')">🔗 TON Keeper / Tonhub</button>
+        <button onclick="copy('${amount}')">📋 Copy amount</button>
+        <button onclick="tgWallet('${amount}')">💎 Telegram Wallet</button>
+        <button onclick="extWallet('${amount}')">🔗 TON Keeper</button>
     `;
+};
 
-    document.getElementById("paymentOptions").style.display = "block";
-});
-
-function copyAmount(amount) {
+// копировать
+function copy(amount) {
     navigator.clipboard.writeText(amount);
-    alert("Amount copied: " + amount);
+    alert("Copied: " + amount);
 }
 
-function showStatus(msg, type = "") {
+// Telegram Wallet
+function tgWallet(amount) {
+    const text = "Address: " + ADDRESS + "\\nAmount: " + amount;
+    navigator.clipboard.writeText(text);
+
+    window.open("https://t.me/wallet", "_blank");
+
+    setTimeout(() => check(amount), 4000);
+}
+
+// Tonkeeper
+function extWallet(amount) {
+    const nano = Math.floor(amount * 1e9);
+    window.open(`ton://transfer/${ADDRESS}?amount=${nano}`);
+
+    setTimeout(() => check(amount), 4000);
+}
+
+// статус
+function status(msg, ok=false) {
     const el = document.getElementById("status");
     el.innerHTML = msg;
-    el.style.background = type === "success" ? "rgba(0,255,100,0.2)" : "rgba(255,200,0,0.2)";
-    el.style.color = type === "success" ? "#00ff88" : "#ffcc00";
+    el.style.color = ok ? "lime" : "orange";
 }
 
-async function checkPayment(amount) {
-    showStatus("Checking payment...");
+// проверка оплаты
+async function check(amount) {
+
+    status("Checking payment...");
 
     for (let i = 0; i < 15; i++) {
+
         try {
-            const res = await fetch(BACKEND_URL, {
+            const r = await fetch(BACKEND, {
                 method: "POST",
-                headers: {"Content-Type": "application/json"},
+                headers: {"Content-Type":"application/json"},
                 body: JSON.stringify({
                     amount: amount,
                     user_id: userId
                 })
             });
 
-            const data = await res.json();
+            const data = await r.json();
 
             if (data.paid) {
-                showStatus("✅ Payment successful!", "success");
+                status("✅ SUCCESS! Check Telegram", true);
                 return;
             }
+
         } catch(e) {}
 
         await new Promise(r => setTimeout(r, 4000));
     }
 
-    showStatus("Payment not found");
-}
-
-// 🟣 Telegram Wallet (копируешь вручную)
-function openTelegramWallet(amount) {
-    const text = `Address: ${address}\nAmount: ${amount} TON`;
-    navigator.clipboard.writeText(text);
-
-    alert("Payment details copied. Open Telegram Wallet and paste.");
-
-    window.open("https://t.me/wallet", "_blank");
-
-    setTimeout(() => checkPayment(amount), 4000);
-}
-
-// 🟢 Tonkeeper / Tonhub (автоматически)
-function openExternalWallet(amount) {
-    const nano = Math.floor(amount * 1e9);
-    const link = `ton://transfer/${address}?amount=${nano}`;
-
-    window.open(link, "_blank");
-
-    setTimeout(() => checkPayment(amount), 4000);
+    status("❌ Payment not found");
 }
 </script>
+
+</body>
+</html>
