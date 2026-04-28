@@ -1,12 +1,12 @@
 <script>
 const tg = window.Telegram.WebApp;
 tg.expand();
-let userId = tg.initDataUnsafe?.user?.id;
+
+let userId = tg.initDataUnsafe?.user?.id || null;
 
 const BACKEND = "https://tomkolin.pythonanywhere.com/check_payment";
 const ADDRESS = "UQA4aInFqReAIe9UrFhqu-CRzhpLAGwAZJKAEYMO_KIjK0ni";
-
-const FIXED_AMOUNT = "0.15";   // ← Вот здесь фиксированная сумма
+const FIXED_AMOUNT = "0.15";
 
 document.getElementById("payBtn").onclick = () => {
     if (!userId) {
@@ -17,68 +17,60 @@ document.getElementById("payBtn").onclick = () => {
     const amount = FIXED_AMOUNT;
 
     document.getElementById("paymentOptions").innerHTML = `
-        <div style="margin-top:15px">
+        <div style="margin-top:15px; text-align:center;">
             <div style="color:#aaa">Send exactly:</div>
             <h2>${amount} TON</h2>
-            <button onclick="copy('${amount}')">📋 Copy amount</button>
-            <button onclick="tgPay('${amount}')">💎 Telegram Wallet</button>
-            <button onclick="extPay('${amount}')">🔗 Tonkeeper</button>
+            <button onclick="copyAmount('${amount}')" style="margin:5px;">📋 Copy amount</button>
+            <button onclick="tgPay('${amount}')" style="margin:5px;">💎 Telegram Wallet</button>
+            <button onclick="extPay('${amount}')" style="margin:5px;">🔗 Tonkeeper</button>
         </div>
     `;
     document.getElementById("paymentOptions").style.display = "block";
 };
 
-// копировать
-function copy(amount) {
+function copyAmount(amount) {
     navigator.clipboard.writeText(amount);
     alert("Copied: " + amount);
 }
 
-// Telegram Wallet
 function tgPay(amount) {
     const text = `Address: ${ADDRESS}\nAmount: ${amount}`;
     navigator.clipboard.writeText(text);
     window.open("https://t.me/wallet", "_blank");
-    setTimeout(() => check(amount), 6000);
+    setTimeout(() => checkPayment(amount), 6000);
 }
 
-// Tonkeeper
 function extPay(amount) {
     const nano = Math.floor(parseFloat(amount) * 1e9);
     window.open(`ton://transfer/${ADDRESS}?amount=${nano}`);
-    setTimeout(() => check(amount), 6000);
+    setTimeout(() => checkPayment(amount), 6000);
 }
 
-// статус
-function status(msg, ok=false) {
+function status(msg, ok = false) {
     const el = document.getElementById("status");
     el.innerHTML = msg;
     el.style.background = ok ? "rgba(0,255,100,0.2)" : "rgba(255,200,0,0.2)";
     el.style.color = ok ? "#00ff88" : "#ffcc00";
 }
 
-// проверка оплаты
-async function check(amount) {
+async function checkPayment(amount) {
     status("Checking payment...");
-    for (let i = 0; i < 20; i++) {
+    for (let i = 0; i < 18; i++) {
         try {
             const res = await fetch(BACKEND, {
                 method: "POST",
-                headers: {"Content-Type":"application/json"},
-                body: JSON.stringify({
-                    amount: amount,
-                    user_id: userId
-                })
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ amount: amount, user_id: userId })
             });
             const data = await res.json();
-            if (data.paid) {
-                status("✅ Payment successful! Check Telegram", true);
+            if (data.paid === true) {
+                status("✅ Payment successful!", true);
                 return;
             }
-        } catch(e) {
-            console.error(e);
+        } catch (e) {
+            console.log("Fetch error", e);
         }
-        await new Promise(r => setTimeout(r, 4000));
+        await new Promise(r => setTimeout(r, 4500));
     }
     status("❌ Payment not found");
 }
