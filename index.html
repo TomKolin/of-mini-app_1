@@ -2,38 +2,76 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>TON Pay</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>OnlyFans Mini</title>
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 
 <style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
 body {
-    background: #0a0a0a;
-    color: white;
-    font-family: Arial;
-    text-align: center;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto;
+    background: linear-gradient(135deg, #0a0a0a 0%, #1a1a1a 100%);
+    color: #fff;
     padding: 20px;
 }
+.container { max-width: 500px; margin: 0 auto; }
+h1 { color: #ff00aa; text-align: center; margin-bottom: 10px; }
+.subtitle { color: #888; text-align: center; margin-bottom: 25px; }
+
+.card {
+    background: #1a1a1a;
+    padding: 20px;
+    border-radius: 20px;
+    margin-bottom: 20px;
+    border: 1px solid rgba(255,0,170,0.3);
+}
+
 button {
     width: 100%;
     padding: 15px;
-    margin: 10px 0;
-    border-radius: 10px;
+    border-radius: 12px;
     border: none;
-    font-size: 16px;
+    margin-top: 10px;
+    font-weight: bold;
 }
-.pay { background: orange; }
+
+.pay-btn {
+    background: linear-gradient(135deg,#ff8800,#ff5500);
+    color: white;
+}
+
+.status {
+    margin-top: 15px;
+    padding: 12px;
+    border-radius: 10px;
+    text-align: center;
+}
 </style>
 </head>
 
 <body>
 
-<h2>💰 Pay for access</h2>
+<div class="container">
 
-<button id="payBtn" class="pay">Pay</button>
+<h1>🔥 OnlyFans Mini</h1>
+<div class="subtitle">Exclusive content • Private chats • Live streams</div>
 
-<div id="paymentOptions"></div>
-<div id="status"></div>
+<div class="card">
+<h3>After payment:</h3>
+<ul style="margin-top:10px; color:#aaa;">
+<li>🔥 Full access</li>
+<li>🔥 Private chats</li>
+<li>🔥 Live streams</li>
+<li>🔥 Instant link</li>
+</ul>
+</div>
+
+<button id="payBtn" class="pay-btn">💰 Pay</button>
+
+<div id="paymentOptions" style="display:none;"></div>
+<div id="status" class="status"></div>
+
+</div>
 
 <script>
 const tg = window.Telegram.WebApp;
@@ -52,20 +90,24 @@ function getAmount(id) {
 document.getElementById("payBtn").onclick = () => {
 
     if (!userId) {
-        alert("Open inside Telegram");
+        alert("Open inside Telegram bot");
         return;
     }
 
     const amount = getAmount(userId);
 
     document.getElementById("paymentOptions").innerHTML = `
-        <p>Send exactly:</p>
-        <h3>${amount} TON</h3>
+        <div style="margin-top:15px">
+            <div style="color:#aaa">Send exactly:</div>
+            <h2>${amount} TON</h2>
 
-        <button onclick="copy('${amount}')">📋 Copy amount</button>
-        <button onclick="tgWallet('${amount}')">💎 Telegram Wallet</button>
-        <button onclick="extWallet('${amount}')">🔗 TON Keeper</button>
+            <button onclick="copy('${amount}')">📋 Copy amount</button>
+            <button onclick="tgPay('${amount}')">💎 Telegram Wallet</button>
+            <button onclick="extPay('${amount}')">🔗 Tonkeeper</button>
+        </div>
     `;
+
+    document.getElementById("paymentOptions").style.display = "block";
 };
 
 // копировать
@@ -75,28 +117,29 @@ function copy(amount) {
 }
 
 // Telegram Wallet
-function tgWallet(amount) {
-    const text = "Address: " + ADDRESS + "\\nAmount: " + amount;
+function tgPay(amount) {
+    const text = `Address: ${ADDRESS}\nAmount: ${amount}`;
     navigator.clipboard.writeText(text);
 
     window.open("https://t.me/wallet", "_blank");
 
-    setTimeout(() => check(amount), 4000);
+    setTimeout(() => check(amount), 5000);
 }
 
 // Tonkeeper
-function extWallet(amount) {
+function extPay(amount) {
     const nano = Math.floor(amount * 1e9);
     window.open(`ton://transfer/${ADDRESS}?amount=${nano}`);
 
-    setTimeout(() => check(amount), 4000);
+    setTimeout(() => check(amount), 5000);
 }
 
 // статус
 function status(msg, ok=false) {
     const el = document.getElementById("status");
     el.innerHTML = msg;
-    el.style.color = ok ? "lime" : "orange";
+    el.style.background = ok ? "rgba(0,255,100,0.2)" : "rgba(255,200,0,0.2)";
+    el.style.color = ok ? "#00ff88" : "#ffcc00";
 }
 
 // проверка оплаты
@@ -104,10 +147,10 @@ async function check(amount) {
 
     status("Checking payment...");
 
-    for (let i = 0; i < 15; i++) {
+    for (let i = 0; i < 20; i++) {
 
         try {
-            const r = await fetch(BACKEND, {
+            const res = await fetch(BACKEND, {
                 method: "POST",
                 headers: {"Content-Type":"application/json"},
                 body: JSON.stringify({
@@ -116,10 +159,10 @@ async function check(amount) {
                 })
             });
 
-            const data = await r.json();
+            const data = await res.json();
 
             if (data.paid) {
-                status("✅ SUCCESS! Check Telegram", true);
+                status("✅ Payment successful! Check Telegram", true);
                 return;
             }
 
