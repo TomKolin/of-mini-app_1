@@ -20,9 +20,9 @@ document.getElementById("payBtn").onclick = () => {
         <div style="margin-top:15px; text-align:center;">
             <div style="color:#aaa">Send exactly:</div>
             <h2>${amount} TON</h2>
-            <button onclick="copyAmount('${amount}')" style="margin:5px;">📋 Copy amount</button>
-            <button onclick="tgPay('${amount}')" style="margin:5px;">💎 Telegram Wallet</button>
-            <button onclick="extPay('${amount}')" style="margin:5px;">🔗 Tonkeeper</button>
+            <button onclick="copyAmount('${amount}')" style="margin:5px; padding:10px;">📋 Copy amount</button>
+            <button onclick="tgPay('${amount}')" style="margin:5px; padding:10px;">💎 Telegram Wallet</button>
+            <button onclick="extPay('${amount}')" style="margin:5px; padding:10px;">🔗 Tonkeeper</button>
         </div>
     `;
     document.getElementById("paymentOptions").style.display = "block";
@@ -48,9 +48,11 @@ function extPay(amount) {
 
 function status(msg, ok = false) {
     const el = document.getElementById("status");
-    el.innerHTML = msg;
-    el.style.background = ok ? "rgba(0,255,100,0.2)" : "rgba(255,200,0,0.2)";
-    el.style.color = ok ? "#00ff88" : "#ffcc00";
+    if (el) {
+        el.innerHTML = msg;
+        el.style.background = ok ? "rgba(0,255,100,0.2)" : "rgba(255,200,0,0.2)";
+        el.style.color = ok ? "#00ff88" : "#ffcc00";
+    }
 }
 
 async function checkPayment(amount) {
@@ -63,12 +65,12 @@ async function checkPayment(amount) {
                 body: JSON.stringify({ amount: amount, user_id: userId })
             });
             const data = await res.json();
-            if (data.paid === true) {
-                status("✅ Payment successful!", true);
+            if (data && data.paid === true) {
+                status("✅ Payment successful! Check Telegram", true);
                 return;
             }
         } catch (e) {
-            console.log("Fetch error", e);
+            console.error("Fetch error:", e);
         }
         await new Promise(r => setTimeout(r, 4500));
     }
