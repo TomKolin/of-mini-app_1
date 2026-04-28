@@ -1,112 +1,30 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-<title>OnlyFans Mini</title>
-<script src="https://telegram.org/js/telegram-web-app.js"></script>
-
-<style>
-* { margin: 0; padding: 0; box-sizing: border-box; }
-body {
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto;
-    background: linear-gradient(135deg, #0a0a0a 0%, #1a1a1a 100%);
-    color: #fff;
-    padding: 20px;
-}
-.container { max-width: 500px; margin: 0 auto; }
-h1 { color: #ff00aa; text-align: center; margin-bottom: 10px; }
-.subtitle { color: #888; text-align: center; margin-bottom: 25px; }
-
-.card {
-    background: #1a1a1a;
-    padding: 20px;
-    border-radius: 20px;
-    margin-bottom: 20px;
-    border: 1px solid rgba(255,0,170,0.3);
-}
-
-button {
-    width: 100%;
-    padding: 15px;
-    border-radius: 12px;
-    border: none;
-    margin-top: 10px;
-    font-weight: bold;
-}
-
-.pay-btn {
-    background: linear-gradient(135deg,#ff8800,#ff5500);
-    color: white;
-}
-
-.status {
-    margin-top: 15px;
-    padding: 12px;
-    border-radius: 10px;
-    text-align: center;
-}
-</style>
-</head>
-
-<body>
-
-<div class="container">
-
-<h1>🔥 OnlyFans Mini</h1>
-<div class="subtitle">Exclusive content • Private chats • Live streams</div>
-
-<div class="card">
-<h3>After payment:</h3>
-<ul style="margin-top:10px; color:#aaa;">
-<li>🔥 Full access</li>
-<li>🔥 Private chats</li>
-<li>🔥 Live streams</li>
-<li>🔥 Instant link</li>
-</ul>
-</div>
-
-<button id="payBtn" class="pay-btn">💰 Pay</button>
-
-<div id="paymentOptions" style="display:none;"></div>
-<div id="status" class="status"></div>
-
-</div>
-
 <script>
 const tg = window.Telegram.WebApp;
 tg.expand();
-
 let userId = tg.initDataUnsafe?.user?.id;
 
 const BACKEND = "https://tomkolin.pythonanywhere.com/check_payment";
 const ADDRESS = "UQA4aInFqReAIe9UrFhqu-CRzhpLAGwAZJKAEYMO_KIjK0ni";
 
-// уникальная сумма
-function getAmount(id) {
-    return (0.1 + (id % 1000) / 100000).toFixed(6);
-}
+const FIXED_AMOUNT = "0.15";   // ← Вот здесь фиксированная сумма
 
 document.getElementById("payBtn").onclick = () => {
-
     if (!userId) {
         alert("Open inside Telegram bot");
         return;
     }
 
-    const amount = getAmount(userId);
+    const amount = FIXED_AMOUNT;
 
     document.getElementById("paymentOptions").innerHTML = `
         <div style="margin-top:15px">
             <div style="color:#aaa">Send exactly:</div>
             <h2>${amount} TON</h2>
-
             <button onclick="copy('${amount}')">📋 Copy amount</button>
             <button onclick="tgPay('${amount}')">💎 Telegram Wallet</button>
             <button onclick="extPay('${amount}')">🔗 Tonkeeper</button>
         </div>
     `;
-
     document.getElementById("paymentOptions").style.display = "block";
 };
 
@@ -120,18 +38,15 @@ function copy(amount) {
 function tgPay(amount) {
     const text = `Address: ${ADDRESS}\nAmount: ${amount}`;
     navigator.clipboard.writeText(text);
-
     window.open("https://t.me/wallet", "_blank");
-
-    setTimeout(() => check(amount), 5000);
+    setTimeout(() => check(amount), 6000);
 }
 
 // Tonkeeper
 function extPay(amount) {
-    const nano = Math.floor(amount * 1e9);
+    const nano = Math.floor(parseFloat(amount) * 1e9);
     window.open(`ton://transfer/${ADDRESS}?amount=${nano}`);
-
-    setTimeout(() => check(amount), 5000);
+    setTimeout(() => check(amount), 6000);
 }
 
 // статус
@@ -144,11 +59,8 @@ function status(msg, ok=false) {
 
 // проверка оплаты
 async function check(amount) {
-
     status("Checking payment...");
-
     for (let i = 0; i < 20; i++) {
-
         try {
             const res = await fetch(BACKEND, {
                 method: "POST",
@@ -158,22 +70,16 @@ async function check(amount) {
                     user_id: userId
                 })
             });
-
             const data = await res.json();
-
             if (data.paid) {
                 status("✅ Payment successful! Check Telegram", true);
                 return;
             }
-
-        } catch(e) {}
-
+        } catch(e) {
+            console.error(e);
+        }
         await new Promise(r => setTimeout(r, 4000));
     }
-
     status("❌ Payment not found");
 }
 </script>
-
-</body>
-</html>
