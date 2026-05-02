@@ -1,3 +1,66 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>OnlyFans Mini</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto;
+    background: linear-gradient(135deg, #0a0a0a 0%, #1a1a1a 100%);
+    color: #fff;
+    padding: 20px;
+}
+.container { max-width: 500px; margin: 0 auto; }
+h1 { color: #ff00aa; text-align: center; margin-bottom: 10px; }
+.subtitle { color: #888; text-align: center; margin-bottom: 25px; }
+.card {
+    background: #1a1a1a;
+    padding: 20px;
+    border-radius: 20px;
+    margin-bottom: 20px;
+    border: 1px solid rgba(255,0,170,0.3);
+}
+button {
+    width: 100%;
+    padding: 15px;
+    border-radius: 12px;
+    border: none;
+    margin-top: 10px;
+    font-weight: bold;
+}
+.pay-btn {
+    background: linear-gradient(135deg,#ff8800,#ff5500);
+    color: white;
+}
+.status {
+    margin-top: 15px;
+    padding: 12px;
+    border-radius: 10px;
+    text-align: center;
+}
+</style>
+</head>
+<body>
+<div class="container">
+<h1>🔥 OnlyFans Mini</h1>
+<div class="subtitle">Exclusive content • Private chats • Live streams</div>
+<div class="card">
+<h3>After payment:</h3>
+<ul style="margin-top:10px; color:#aaa;">
+<li>🔥 Full access</li>
+<li>🔥 Private chats</li>
+<li>🔥 Live streams</li>
+<li>🔥 Instant link</li>
+</ul>
+</div>
+<button id="payBtn" class="pay-btn">💰 Pay 0.15 TON</button>
+<div id="paymentOptions" style="display:none;"></div>
+<div id="status" class="status"></div>
+</div>
+
 <script>
 const tg = window.Telegram.WebApp;
 tg.expand();
@@ -8,7 +71,7 @@ const BACKEND = "https://tomkolin.pythonanywhere.com/check_payment";
 const ADDRESS = "UQA4aInFqReAIe9UrFhqu-CRzhpLAGwAZJKAEYMO_KIjK0ni";
 const FIXED_AMOUNT = "0.15";
 
-document.getElementById("payBtn").onclick = () => {
+document.getElementById("payBtn").onclick = function() {
     if (!userId) {
         alert("Open inside Telegram bot");
         return;
@@ -68,11 +131,9 @@ async function checkPayment(amount) {
 
             if (data && data.paid === true) {
                 window.status("✅ Payment successful! Link sent to chat", true);
-                
-                // Отправляем ссылку в чат с ботом
                 if (data.link) {
-                    tg.sendData(JSON.stringify({ success: true, link: data.link }));
-                    tg.showAlert("Payment successful!\nLink sent to this chat.");
+                    tg.sendData(JSON.stringify({success: true, link: data.link}));
+                    tg.showAlert("Payment successful!\nСсылка отправлена в чат.");
                 }
                 return;
             }
@@ -84,3 +145,5 @@ async function checkPayment(amount) {
     window.status("❌ Payment not found");
 }
 </script>
+</body>
+</html>
