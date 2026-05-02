@@ -1,5 +1,156 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>OnlyFans Mini</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto;
+    background: linear-gradient(135deg, #0a0a0a 0%, #1a1a1a 100%);
+    color: #fff;
+    padding: 20px;
+}
+.container { max-width: 500px; margin: 0 auto; }
+h1 { color: #ff00aa; text-align: center; margin-bottom: 10px; }
+.subtitle { color: #888; text-align: center; margin-bottom: 25px; }
+.card {
+    background: #1a1a1a;
+    padding: 20px;
+    border-radius: 20px;
+    margin-bottom: 20px;
+    border: 1px solid rgba(255,0,170,0.3);
+}
+button {
+    width: 100%;
+    padding: 15px;
+    border-radius: 12px;
+    border: none;
+    margin-top: 10px;
+    font-weight: bold;
+    cursor: pointer;
+}
+.pay-btn {
+    background: linear-gradient(135deg,#ff8800,#ff5500);
+    color: white;
+}
+.status {
+    margin-top: 15px;
+    padding: 12px;
+    border-radius: 10px;
+    text-align: center;
+}
+.link-box {
+    margin-top: 20px;
+    padding: 15px;
+    background: rgba(0,255,100,0.1);
+    border-radius: 15px;
+    word-break: break-all;
+}
+.link-box a {
+    color: #ff00aa;
+}
+</style>
+</head>
+<body>
+<div class="container">
+<h1>🔥 OnlyFans Mini</h1>
+<div class="subtitle">Exclusive content • Private chats • Live streams</div>
+<div class="card">
+<h3>After payment:</h3>
+<ul style="margin-top:10px; color:#aaa;">
+<li>🔥 Full access</li>
+<li>🔥 Private chats</li>
+<li>🔥 Live streams</li>
+<li>🔥 Instant link</li>
+</ul>
+</div>
+<button id="payBtn" class="pay-btn">💰 Pay 0.15 TON</button>
+<div id="paymentOptions" style="display:none;"></div>
+<div id="status" class="status"></div>
+</div>
+
+<script>
+const tg = window.Telegram.WebApp;
+tg.expand();
+
+let userId = tg.initDataUnsafe?.user?.id || null;
+const BACKEND = "https://tomkolin.pythonanywhere.com/check_payment";
+const TEST_PAY = "https://tomkolin.pythonanywhere.com/test-pay";
+const ADDRESS = "UQA4aInFqReAIe9UrFhqu-CRzhpLAGwAZJKAEYMO_KIjK0ni";
+const FIXED_AMOUNT = "0.15";
+
+document.getElementById("payBtn").onclick = () => {
+    if (!userId) {
+        alert("Open inside Telegram bot");
+        return;
+    }
+
+    document.getElementById("paymentOptions").innerHTML = `
+        <div style="margin-top:15px; text-align:center;">
+            <div style="color:#aaa">Send exactly:</div>
+            <h2>${FIXED_AMOUNT} TON</h2>
+            <p>Address: <small>${ADDRESS.substring(0, 10)}...</small></p>
+            <button onclick="copyAddress()" style="margin:5px; padding:10px;">📋 Copy address</button>
+            <button onclick="tgPay()" style="margin:5px; padding:10px;">💎 Telegram Wallet</button>
+            <button onclick="extPay()" style="margin:5px; padding:10px;">🔗 Tonkeeper</button>
+            <hr style="margin:15px 0; border-color:#333;">
+            <button onclick="testPay()" style="margin:5px; padding:10px; background:#00aa55;">🧪 Test Payment (DEMO)</button>
+        </div>
+    `;
+    document.getElementById("paymentOptions").style.display = "block";
+};
+
+window.copyAddress = function() {
+    navigator.clipboard.writeText(ADDRESS);
+    alert("Address copied: " + ADDRESS);
+    window.status("💰 Waiting for payment...", false);
+    setTimeout(() => checkPayment(FIXED_AMOUNT), 3000);
+};
+
+window.tgPay = function() {
+    const text = `Address: ${ADDRESS}\nAmount: ${FIXED_AMOUNT} TON`;
+    navigator.clipboard.writeText(text);
+    window.open("https://t.me/wallet", "_blank");
+    window.status("💎 Check Telegram Wallet", false);
+    setTimeout(() => checkPayment(FIXED_AMOUNT), 8000);
+};
+
+window.extPay = function() {
+    const nano = Math.floor(parseFloat(FIXED_AMOUNT) * 1e9);
+    window.open(`ton://transfer/${ADDRESS}?amount=${nano}`);
+    window.status("🔗 Opening Tonkeeper...", false);
+    setTimeout(() => checkPayment(FIXED_AMOUNT), 8000);
+};
+
+window.testPay = async function() {
+    window.status("🧪 Test payment...", false);
+    try {
+        const res = await fetch(`${TEST_PAY}/${userId}`);
+        const data = await res.json();
+        if (data.status === 'paid') {
+            window.status("✅ Test access granted!", true);
+            if (data.link) showLink(data.link);
+        }
+    } catch(e) {
+        console.error(e);
+        window.status("❌ Test payment error");
+    }
+};
+
+window.status = function(msg, ok = false) {
+    const el = document.getElementById("status");
+    if (el) {
+        el.innerHTML = msg;
+        el.style.background = ok ? "rgba(0,255,100,0.2)" : "rgba(255,200,0,0.2)";
+        el.style.color = ok ? "#00ff88" : "#ffcc00";
+    }
+};
+
 async function checkPayment(amount) {
-    window.status("⏳ Проверка платежа...");
+    window.status("💰 Проверка платежа...");
     
     for (let i = 0; i < 24; i++) {
         try {
@@ -16,7 +167,6 @@ async function checkPayment(amount) {
             
             if (data && data.paid === true) {
                 window.status("✅ Платёж подтверждён! Ссылка отправлена в Telegram ✅", true);
-                // Показать ссылку прямо в приложении
                 if (data.link) {
                     showLink(data.link);
                 }
@@ -26,9 +176,8 @@ async function checkPayment(amount) {
             console.error("Fetch error:", e);
         }
         
-        // Прогресс проверки
         window.status(`⏳ Проверка платежа... ${i+1}/24`);
-        await new Promise(r => setTimeout(r, 5000)); // 5 секунд между проверками
+        await new Promise(r => setTimeout(r, 5000));
     }
     
     window.status("❌ Платёж не найден. Убедитесь, что отправили ровно 0.15 TON");
@@ -37,13 +186,26 @@ async function checkPayment(amount) {
 
 function showLink(link) {
     const linkHtml = `
-        <div style="margin-top:20px; padding:15px; background:rgba(0,255,100,0.1); border-radius:15px;">
+        <div class="link-box">
             <h3>🎉 Доступ открыт!</h3>
-            <a href="${link}" target="_blank" style="color:#ff00aa; word-break:break-all;">${link}</a>
-            <button onclick="navigator.clipboard.writeText('${link}')" style="margin-top:10px;">
+            <p>Ваша ссылка на контент:</p>
+            <a href="${link}" target="_blank">${link}</a>
+            <br><br>
+            <button onclick="navigator.clipboard.writeText('${link}')" style="padding:10px;">
                 📋 Скопировать ссылку
             </button>
         </div>
     `;
-    document.getElementById("paymentOptions").insertAdjacentHTML('beforeend', linkHtml);
+    const optionsDiv = document.getElementById("paymentOptions");
+    if (optionsDiv) {
+        optionsDiv.insertAdjacentHTML('beforeend', linkHtml);
+    }
 }
+
+// Автоматически проверяем при открытии (если уже был платеж)
+if (userId) {
+    setTimeout(() => checkPayment(FIXED_AMOUNT), 1000);
+}
+</script>
+</body>
+</html>
