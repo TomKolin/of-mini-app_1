@@ -1,179 +1,287 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-<title>OnlyFans Mini</title>
-<script src="https://telegram.org/js/telegram-web-app.js"></script>
-
-<style>
-* { margin: 0; padding: 0; box-sizing: border-box; }
-body {
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto;
-    background: linear-gradient(135deg, #0a0a0a 0%, #1a1a1a 100%);
-    color: #fff;
-    padding: 20px;
-}
-.container { max-width: 500px; margin: 0 auto; }
-h1 { color: #ff00aa; text-align: center; margin-bottom: 10px; }
-.subtitle { color: #888; text-align: center; margin-bottom: 25px; }
-
-.card {
-    background: #1a1a1a;
-    padding: 20px;
-    border-radius: 20px;
-    margin-bottom: 20px;
-    border: 1px solid rgba(255,0,170,0.3);
-}
-
-button {
-    width: 100%;
-    padding: 15px;
-    border-radius: 12px;
-    border: none;
-    margin-top: 10px;
-    font-weight: bold;
-}
-
-.pay-btn {
-    background: linear-gradient(135deg,#ff8800,#ff5500);
-    color: white;
-}
-
-.status {
-    margin-top: 15px;
-    padding: 12px;
-    border-radius: 10px;
-    text-align: center;
-}
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>OnlyFans Mini</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background: linear-gradient(135deg, #0a0a0a 0%, #1a1a1a 100%);
+            color: #fff;
+            padding: 20px;
+            min-height: 100vh;
+        }
+        .container { max-width: 500px; margin: 0 auto; }
+        h1 { color: #ff00aa; font-size: 28px; text-align: center; margin-bottom: 8px; }
+        .subtitle { color: #888; font-size: 14px; text-align: center; margin-bottom: 25px; }
+        .card {
+            background: rgba(26, 26, 26, 0.95);
+            padding: 24px;
+            border-radius: 20px;
+            margin-bottom: 25px;
+            border: 1px solid rgba(255, 0, 170, 0.3);
+        }
+        button {
+            width: 100%;
+            padding: 16px;
+            font-size: 17px;
+            font-weight: bold;
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            margin: 12px 0;
+            transition: transform 0.2s;
+        }
+        button:hover { transform: scale(0.98); }
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        .pay-btn {
+            background: linear-gradient(135deg, #ff8800, #ff5500);
+            color: white;
+        }
+        .wallet-btn {
+            background: linear-gradient(135deg, #0088ff, #0055ff);
+            color: white;
+        }
+        .status {
+            margin-top: 15px;
+            padding: 15px;
+            border-radius: 12px;
+            text-align: center;
+            animation: fadeIn 0.3s;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .loader {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255,255,255,0.3);
+            border-radius: 50%;
+            border-top-color: #fff;
+            animation: spin 1s ease-in-out infinite;
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        .hidden { display: none; }
+        .retry-btn {
+            background: rgba(255,200,0,0.2);
+            color: #ffcc00;
+            border: 1px solid #ffcc00;
+        }
+    </style>
 </head>
-
 <body>
-
 <div class="container">
+    <h1>🔥 OnlyFans Mini</h1>
+    <div class="subtitle">Exclusive content • Private chats • Live streams</div>
 
-<h1>🔥 OnlyFans Mini</h1>
-<div class="subtitle">Exclusive content • Private chats • Live streams</div>
+    <div class="card">
+        <h2 style="color:#ff00aa; margin-bottom:15px;">What you get after payment</h2>
+        <ul style="list-style:none; padding-left:0;">
+            <li>🔥 Full access to 1000+ hot photos and videos</li>
+            <li>🔥 Private 1-on-1 chats with models</li>
+            <li>🔥 Live streams and custom content</li>
+            <li>🔥 Weekly fresh updates</li>
+            <li>🔥 Anonymous TON payment</li>
+            <li>🔥 Instant access link</li>
+        </ul>
+    </div>
 
-<div class="card">
-<h3>After payment:</h3>
-<ul style="margin-top:10px; color:#aaa;">
-<li>🔥 Full access</li>
-<li>🔥 Private chats</li>
-<li>🔥 Live streams</li>
-<li>🔥 Instant link</li>
-</ul>
-</div>
+    <button id="payBtn" class="pay-btn">💰 Pay 0.1 TON for FULL ACCESS</button>
+    
+    <div id="paymentOptions" style="display:none;">
+        <button id="walletBtn" class="wallet-btn">💎 Open Telegram Wallet</button>
+        <button id="externalBtn" class="wallet-btn">🔗 Open TON Keeper / Tonhub</button>
+    </div>
 
-<button id="payBtn" class="pay-btn">💰 Pay</button>
-
-<div id="paymentOptions" style="display:none;"></div>
-<div id="status" class="status"></div>
-
+    <div id="status" class="status hidden"></div>
 </div>
 
 <script>
-const tg = window.Telegram.WebApp;
-tg.expand();
-
-let userId = tg.initDataUnsafe?.user?.id;
-
-const BACKEND = "https://tomkolin.pythonanywhere.com/check_payment";
-const ADDRESS = "UQA4aInFqReAIe9UrFhqu-CRzhpLAGwAZJKAEYMO_KIjK0ni";
-
-// уникальная сумма
-function getAmount(id) {
-    return (0.1 + (id % 1000) / 100000).toFixed(6);
-}
-
-document.getElementById("payBtn").onclick = () => {
-
-    if (!userId) {
-        alert("Open inside Telegram bot");
-        return;
+    const tg = window.Telegram?.WebApp;
+    const BACKEND_URL = "https://tomkolins.pythonanywhere.com";
+    
+    let paymentInProgress = false;
+    let currentComment = null;
+    
+    // Показываем интерфейс
+    if (tg) {
+        tg.expand();
+        tg.ready();
     }
-
-    const amount = getAmount(userId);
-
-    document.getElementById("paymentOptions").innerHTML = `
-        <div style="margin-top:15px">
-            <div style="color:#aaa">Send exactly:</div>
-            <h2>${amount} TON</h2>
-
-            <button onclick="copy('${amount}')">📋 Copy amount</button>
-            <button onclick="tgPay('${amount}')">💎 Telegram Wallet</button>
-            <button onclick="extPay('${amount}')">🔗 Tonkeeper</button>
-        </div>
-    `;
-
-    document.getElementById("paymentOptions").style.display = "block";
-};
-
-// копировать
-function copy(amount) {
-    navigator.clipboard.writeText(amount);
-    alert("Copied: " + amount);
-}
-
-// Telegram Wallet
-function tgPay(amount) {
-    const text = `Address: ${ADDRESS}\nAmount: ${amount}`;
-    navigator.clipboard.writeText(text);
-
-    window.open("https://t.me/wallet", "_blank");
-
-    setTimeout(() => check(amount), 5000);
-}
-
-// Tonkeeper
-function extPay(amount) {
-    const nano = Math.floor(amount * 1e9);
-    window.open(`ton://transfer/${ADDRESS}?amount=${nano}`);
-
-    setTimeout(() => check(amount), 5000);
-}
-
-// статус
-function status(msg, ok=false) {
-    const el = document.getElementById("status");
-    el.innerHTML = msg;
-    el.style.background = ok ? "rgba(0,255,100,0.2)" : "rgba(255,200,0,0.2)";
-    el.style.color = ok ? "#00ff88" : "#ffcc00";
-}
-
-// проверка оплаты
-async function check(amount) {
-
-    status("Checking payment...");
-
-    for (let i = 0; i < 20; i++) {
-
-        try {
-            const res = await fetch(BACKEND, {
-                method: "POST",
-                headers: {"Content-Type":"application/json"},
-                body: JSON.stringify({
-                    amount: amount,
-                    user_id: userId
-                })
+    
+    function showStatus(msg, type = "info", showRetry = false) {
+        const el = document.getElementById("status");
+        el.className = "status";
+        el.classList.remove("hidden");
+        
+        let bgColor = "rgba(255,200,0,0.2)";
+        let textColor = "#ffcc00";
+        
+        if (type === "success") {
+            bgColor = "rgba(0,255,100,0.2)";
+            textColor = "#00ff88";
+        } else if (type === "error") {
+            bgColor = "rgba(255,0,0,0.2)";
+            textColor = "#ff4444";
+        }
+        
+        el.style.background = bgColor;
+        el.style.color = textColor;
+        
+        let retryHtml = "";
+        if (showRetry) {
+            retryHtml = '<br><button id="retryCheck" class="retry-btn" style="margin-top:10px; width:auto; padding:8px 16px;">🔄 Check again</button>';
+        }
+        
+        el.innerHTML = msg + retryHtml;
+        
+        if (showRetry) {
+            document.getElementById("retryCheck")?.addEventListener("click", () => {
+                if (currentComment) checkPayment(currentComment);
             });
-
-            const data = await res.json();
-
-            if (data.paid) {
-                status("✅ Payment successful! Check Telegram", true);
-                return;
-            }
-
-        } catch(e) {}
-
-        await new Promise(r => setTimeout(r, 4000));
+        }
     }
-
-    status("❌ Payment not found");
-}
+    
+    async function initPayment() {
+        try {
+            const initData = tg?.initData || "";
+            if (!initData) {
+                showStatus("❌ Please open this app from Telegram bot", "error");
+                return null;
+            }
+            
+            const response = await fetch(`${BACKEND_URL}/init_payment`, {
+                method: "POST",
+                headers: {"Content-Type": "application/json"},
+                body: JSON.stringify({initData})
+            });
+            
+            const data = await response.json();
+            if (data.success) {
+                currentComment = data.comment;
+                return data;
+            } else {
+                showStatus("❌ Payment initialization failed", "error");
+                return null;
+            }
+        } catch (error) {
+            console.error("Init error:", error);
+            showStatus("❌ Network error. Please try again.", "error", true);
+            return null;
+        }
+    }
+    
+    async function checkPayment(comment) {
+        if (paymentInProgress) return;
+        paymentInProgress = true;
+        
+        showStatus('<span class="loader"></span> Checking payment... (0/15)', "info");
+        
+        for (let i = 1; i <= 15; i++) {
+            try {
+                const initData = tg?.initData || "";
+                const response = await fetch(`${BACKEND_URL}/check_payment`, {
+                    method: "POST",
+                    headers: {"Content-Type": "application/json"},
+                    body: JSON.stringify({initData, comment})
+                });
+                
+                const data = await response.json();
+                
+                if (data.paid) {
+                    showStatus("✅ Payment confirmed! Check your Telegram for access link", "success");
+                    paymentInProgress = false;
+                    
+                    // Закрываем WebApp через 3 секунды
+                    setTimeout(() => {
+                        if (tg) tg.close();
+                    }, 3000);
+                    return;
+                }
+                
+                showStatus(`<span class="loader"></span> Checking payment... (${i}/15)`, "info");
+            } catch(e) {
+                console.error("Check error:", e);
+            }
+            
+            await new Promise(r => setTimeout(r, 4000));
+        }
+        
+        showStatus("⏰ Payment not found. Please make sure you sent exactly 0.1 TON with the correct comment.", "error", true);
+        paymentInProgress = false;
+    }
+    
+    async function openTelegramWallet() {
+        if (paymentInProgress) {
+            showStatus("Payment check already in progress", "error");
+            return;
+        }
+        
+        const paymentData = await initPayment();
+        if (!paymentData) return;
+        
+        const text = `Address: ${paymentData.address}\nComment: ${paymentData.comment}\nAmount: ${paymentData.amount} TON\n\n⚠️ IMPORTANT: Copy the comment exactly as shown!`;
+        
+        try {
+            await navigator.clipboard.writeText(text);
+            showStatus("✅ Info copied! Opening Telegram Wallet...", "success");
+        } catch(err) {
+            showStatus("⚠️ Please copy this info manually:\n\n" + text, "info");
+        }
+        
+        window.open("https://t.me/wallet", "_blank");
+        setTimeout(() => checkPayment(paymentData.comment), 5000);
+    }
+    
+    async function openExternalWallet() {
+        if (paymentInProgress) {
+            showStatus("Payment check already in progress", "error");
+            return;
+        }
+        
+        const paymentData = await initPayment();
+        if (!paymentData) return;
+        
+        const link = `ton://transfer/${paymentData.address}?amount=100000000&text=${encodeURIComponent(paymentData.comment)}`;
+        
+        showStatus("Opening TON wallet...", "info");
+        window.open(link, "_blank");
+        setTimeout(() => checkPayment(paymentData.comment), 5000);
+    }
+    
+    document.getElementById("payBtn").addEventListener("click", async () => {
+        if (paymentInProgress) {
+            showStatus("Payment already in progress", "error");
+            return;
+        }
+        
+        if (!tg || !tg.initData) {
+            showStatus("❌ Please open this app from @onlyfansssssss_bot", "error");
+            return;
+        }
+        
+        document.getElementById("paymentOptions").style.display = "block";
+        document.getElementById("payBtn").disabled = true;
+        showStatus("Select payment method", "info");
+    });
+    
+    document.getElementById("walletBtn").addEventListener("click", openTelegramWallet);
+    document.getElementById("externalBtn").addEventListener("click", openExternalWallet);
+    
+    // Проверяем, не был ли уже оплачен доступ
+    window.addEventListener("load", async () => {
+        // Здесь можно добавить проверку существующей сессии
+    });
 </script>
-
 </body>
 </html>
