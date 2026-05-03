@@ -33,19 +33,9 @@
             border-radius: 12px;
             cursor: pointer;
             margin: 12px 0;
-            transition: transform 0.2s;
-        }
-        button:hover { transform: scale(0.98); }
-        button:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
         }
         .pay-btn {
             background: linear-gradient(135deg, #ff8800, #ff5500);
-            color: white;
-        }
-        .wallet-btn {
-            background: linear-gradient(135deg, #0088ff, #0055ff);
             color: white;
         }
         .status {
@@ -53,29 +43,6 @@
             padding: 15px;
             border-radius: 12px;
             text-align: center;
-            animation: fadeIn 0.3s;
-        }
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(-10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-        .loader {
-            display: inline-block;
-            width: 20px;
-            height: 20px;
-            border: 3px solid rgba(255,255,255,0.3);
-            border-radius: 50%;
-            border-top-color: #fff;
-            animation: spin 1s ease-in-out infinite;
-        }
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
-        .hidden { display: none; }
-        .retry-btn {
-            background: rgba(255,200,0,0.2);
-            color: #ffcc00;
-            border: 1px solid #ffcc00;
         }
     </style>
 </head>
@@ -97,191 +64,71 @@
     </div>
 
     <button id="payBtn" class="pay-btn">💰 Pay 0.1 TON for FULL ACCESS</button>
-    
+
     <div id="paymentOptions" style="display:none;">
-        <button id="walletBtn" class="wallet-btn">💎 Open Telegram Wallet</button>
-        <button id="externalBtn" class="wallet-btn">🔗 Open TON Keeper / Tonhub</button>
+        <button onclick="openTelegramWallet()">💎 Telegram Wallet</button>
+        <button onclick="openExternalWallet()">🔗 TON Keeper / Tonhub</button>
     </div>
 
-    <div id="status" class="status hidden"></div>
+    <div id="status" class="status"></div>
 </div>
 
 <script>
     const tg = window.Telegram?.WebApp;
-    const BACKEND_URL = "https://tomkolins.pythonanywhere.com";
-    
-    let paymentInProgress = false;
-    let currentComment = null;
-    
-    // Показываем интерфейс
-    if (tg) {
-        tg.expand();
-        tg.ready();
-    }
-    
-    function showStatus(msg, type = "info", showRetry = false) {
+    let userId = tg?.initDataUnsafe?.user?.id || 0;
+
+    const BACKEND_URL = "https://tomkolins.pythonanywhere.com/check_payment";
+    const address = "UQA4aInFqReAIe9UrFhqu-CRzhpLAGwAZJKAEYMO_KIjK0ni";
+
+    document.getElementById("payBtn").addEventListener("click", () => {
+        if (userId === 0) {
+            alert("Open this from @onlyfansssssss_bot");
+            return;
+        }
+        document.getElementById("paymentOptions").style.display = "block";
+    });
+
+    function showStatus(msg, type = "") {
         const el = document.getElementById("status");
-        el.className = "status";
-        el.classList.remove("hidden");
-        
-        let bgColor = "rgba(255,200,0,0.2)";
-        let textColor = "#ffcc00";
-        
-        if (type === "success") {
-            bgColor = "rgba(0,255,100,0.2)";
-            textColor = "#00ff88";
-        } else if (type === "error") {
-            bgColor = "rgba(255,0,0,0.2)";
-            textColor = "#ff4444";
-        }
-        
-        el.style.background = bgColor;
-        el.style.color = textColor;
-        
-        let retryHtml = "";
-        if (showRetry) {
-            retryHtml = '<br><button id="retryCheck" class="retry-btn" style="margin-top:10px; width:auto; padding:8px 16px;">🔄 Check again</button>';
-        }
-        
-        el.innerHTML = msg + retryHtml;
-        
-        if (showRetry) {
-            document.getElementById("retryCheck")?.addEventListener("click", () => {
-                if (currentComment) checkPayment(currentComment);
-            });
-        }
+        el.innerHTML = msg;
+        el.style.background = type === "success" ? "rgba(0,255,100,0.2)" : "rgba(255,200,0,0.2)";
+        el.style.color = type === "success" ? "#00ff88" : "#ffcc00";
     }
-    
-    async function initPayment() {
-        try {
-            const initData = tg?.initData || "";
-            if (!initData) {
-                showStatus("❌ Please open this app from Telegram bot", "error");
-                return null;
-            }
-            
-            const response = await fetch(`${BACKEND_URL}/init_payment`, {
-                method: "POST",
-                headers: {"Content-Type": "application/json"},
-                body: JSON.stringify({initData})
-            });
-            
-            const data = await response.json();
-            if (data.success) {
-                currentComment = data.comment;
-                return data;
-            } else {
-                showStatus("❌ Payment initialization failed", "error");
-                return null;
-            }
-        } catch (error) {
-            console.error("Init error:", error);
-            showStatus("❌ Network error. Please try again.", "error", true);
-            return null;
-        }
-    }
-    
+
     async function checkPayment(comment) {
-        if (paymentInProgress) return;
-        paymentInProgress = true;
-        
-        showStatus('<span class="loader"></span> Checking payment... (0/15)', "info");
-        
+        showStatus("Checking payment...");
         for (let i = 1; i <= 15; i++) {
             try {
-                const initData = tg?.initData || "";
-                const response = await fetch(`${BACKEND_URL}/check_payment`, {
+                const res = await fetch(BACKEND_URL, {
                     method: "POST",
                     headers: {"Content-Type": "application/json"},
-                    body: JSON.stringify({initData, comment})
+                    body: JSON.stringify({comment})
                 });
-                
-                const data = await response.json();
-                
+                const data = await res.json();
                 if (data.paid) {
-                    showStatus("✅ Payment confirmed! Check your Telegram for access link", "success");
-                    paymentInProgress = false;
-                    
-                    // Закрываем WebApp через 3 секунды
-                    setTimeout(() => {
-                        if (tg) tg.close();
-                    }, 3000);
+                    showStatus("✅ Payment successful! Link sent to chat", "success");
                     return;
                 }
-                
-                showStatus(`<span class="loader"></span> Checking payment... (${i}/15)`, "info");
-            } catch(e) {
-                console.error("Check error:", e);
-            }
-            
+            } catch(e) {}
             await new Promise(r => setTimeout(r, 4000));
         }
-        
-        showStatus("⏰ Payment not found. Please make sure you sent exactly 0.1 TON with the correct comment.", "error", true);
-        paymentInProgress = false;
+        showStatus("Payment not found. Try again.");
     }
-    
-    async function openTelegramWallet() {
-        if (paymentInProgress) {
-            showStatus("Payment check already in progress", "error");
-            return;
-        }
-        
-        const paymentData = await initPayment();
-        if (!paymentData) return;
-        
-        const text = `Address: ${paymentData.address}\nComment: ${paymentData.comment}\nAmount: ${paymentData.amount} TON\n\n⚠️ IMPORTANT: Copy the comment exactly as shown!`;
-        
-        try {
-            await navigator.clipboard.writeText(text);
-            showStatus("✅ Info copied! Opening Telegram Wallet...", "success");
-        } catch(err) {
-            showStatus("⚠️ Please copy this info manually:\n\n" + text, "info");
-        }
-        
+
+    function openTelegramWallet() {
+        const comment = `onlyfansaccess_${userId}`;
+        const text = `Address: ${address}\nComment: ${comment}\nAmount: 0.1 TON`;
+        navigator.clipboard.writeText(text);
         window.open("https://t.me/wallet", "_blank");
-        setTimeout(() => checkPayment(paymentData.comment), 5000);
+        setTimeout(() => checkPayment(comment), 3000);
     }
-    
-    async function openExternalWallet() {
-        if (paymentInProgress) {
-            showStatus("Payment check already in progress", "error");
-            return;
-        }
-        
-        const paymentData = await initPayment();
-        if (!paymentData) return;
-        
-        const link = `ton://transfer/${paymentData.address}?amount=100000000&text=${encodeURIComponent(paymentData.comment)}`;
-        
-        showStatus("Opening TON wallet...", "info");
+
+    function openExternalWallet() {
+        const comment = `onlyfansaccess_${userId}`;
+        const link = `ton://transfer/${address}?amount=100000000&text=${encodeURIComponent(comment)}`;
         window.open(link, "_blank");
-        setTimeout(() => checkPayment(paymentData.comment), 5000);
+        setTimeout(() => checkPayment(comment), 3000);
     }
-    
-    document.getElementById("payBtn").addEventListener("click", async () => {
-        if (paymentInProgress) {
-            showStatus("Payment already in progress", "error");
-            return;
-        }
-        
-        if (!tg || !tg.initData) {
-            showStatus("❌ Please open this app from @onlyfansssssss_bot", "error");
-            return;
-        }
-        
-        document.getElementById("paymentOptions").style.display = "block";
-        document.getElementById("payBtn").disabled = true;
-        showStatus("Select payment method", "info");
-    });
-    
-    document.getElementById("walletBtn").addEventListener("click", openTelegramWallet);
-    document.getElementById("externalBtn").addEventListener("click", openExternalWallet);
-    
-    // Проверяем, не был ли уже оплачен доступ
-    window.addEventListener("load", async () => {
-        // Здесь можно добавить проверку существующей сессии
-    });
 </script>
 </body>
 </html>
